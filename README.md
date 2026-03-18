@@ -12,7 +12,7 @@
 - นายบวรรัตน์ ศิริเมือง / รหัสนักศึกษา: 67543210036-9
 - นายภาณุวัฒน์ ยาท้วม / รหัสนักศึกษา: 67543210043-5
 
-**Repository:** `engse207-sec2-lab2-[รหัส1]-[รหัส2]/`
+**Repository:** `final-lab-sec2-set2--67543210036-9---67543210043-5-/`
 
 ---
 
@@ -352,46 +352,17 @@ curl http://localhost:3003/api/activity/me \
 
 ---
 
-## 19. Screenshots
-
-โฟลเดอร์ `screenshots/` ประกอบด้วย
-
-| ไฟล์ | รายการ |
-|---|---|
-| `01_railway_dashboard.png` | 3 services + 3 databases บน Railway |
-| `02_auth_register_cloud.png` | POST /register → 201 |
-| `03_auth_login_cloud.png` | POST /login → JWT |
-| `04_auth_me_cloud.png` | GET /auth/me |
-| `05_activity_me_user_events.png` | GET /activity/me → USER_REGISTERED + USER_LOGIN |
-| `06_activity_task_created.png` | GET /activity/me หลัง create task → TASK_CREATED |
-| `07_activity_status_changed.png` | GET /activity/me → TASK_STATUS_CHANGED |
-| `08_task_list_cloud.png` | GET /tasks → list |
-| `09_protected_401.png` | No JWT → 401 |
-| `10_member_activity_all_403.png` | member → 403 |
-| `11_admin_activity_all_200.png` | admin → 200 |
-| `12_readme_architecture.png` | Architecture diagram |
-| `13_bonus_graceful_degradation.png` | (Bonus) task สำเร็จแม้ activity down |
-
 ---
+POST /register
 
-## 20. Bonus: Graceful Degradation
+<img width="791" height="100" alt="image" src="https://github.com/user-attachments/assets/780c9c85-ed92-495c-8e50-9b7a4f86215c" />
 
-ระบบรองรับ graceful degradation — ถ้า Activity Service ล่ม Auth Service และ Task Service **ยังทำงานได้ปกติ**
 
-**วิธีทดสอบ:**
-```bash
-# หยุด activity-service
-docker compose stop activity-service
+POST /login
 
-# สร้าง task — ต้องได้ 201 แม้ activity-service ล่ม
-curl -X POST http://localhost:3002/api/tasks \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Task while activity is down","priority":"low"}'
-# ต้องได้ 201
-```
+<img width="789" height="86" alt="image" src="https://github.com/user-attachments/assets/7ebe4f58-e03d-4916-ab7a-4d6a7c61a8a1" />
 
-เหตุผล: `logActivity()` ใช้ fire-and-forget (`.catch(() => {})`) จึงไม่หยุดรอผลลัพธ์จาก activity-service
+
 
 ---
 
