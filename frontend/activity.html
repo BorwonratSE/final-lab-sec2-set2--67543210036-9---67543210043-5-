@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📅 Activity — Final Lab Sec2</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f172a; --surface: #1e293b; --border: #334155;
+      --text: #e2e8f0; --muted: #94a3b8;
+      --blue: #3b82f6; --green: #22c55e; --yellow: #f59e0b;
+      --red: #ef4444; --teal: #14b8a6;
+    }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+    .header { background:var(--surface); border-bottom:1px solid var(--border); padding:1rem 1.5rem; display:flex; justify-content:space-between; align-items:center; }
+    .header h1 { font-size:1.1rem; font-weight:700; }
+    .container { max-width:900px; margin:0 auto; padding:1.5rem; }
+
+    /* Stats */
+    .stats { display:grid; grid-template-columns:repeat(5,1fr); gap:.75rem; margin-bottom:1.5rem; }
+    .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:.75rem; padding:.85rem 1rem; text-align:center; }
+    .stat-label { color:var(--muted); font-size:.72rem; text-transform:uppercase; }
+    .stat-value { font-size:1.5rem; font-weight:700; margin-top:.2rem; }
+
+    /* Filter */
+    .filter-bar { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.25rem; }
+    .filter-bar select, .filter-bar input {
+      background:var(--surface); border:1px solid var(--border); color:var(--text);
+      padding:.45rem .75rem; border-radius:.5rem; font-size:.85rem; outline:none;
+    }
+    .btn { padding:.45rem 1rem; border-radius:.5rem; border:none; cursor:pointer; font-size:.85rem; font-weight:600; }
+    .btn-primary { background:var(--blue); color:#fff; }
+    .btn-secondary { background:var(--surface); color:var(--text); border:1px solid var(--border); }
+
+    /* Tabs */
+    .tabs { display:flex; gap:.5rem; margin-bottom:1.25rem; }
+    .tab { padding:.45rem 1.1rem; border-radius:.5rem; border:1px solid var(--border); cursor:pointer; font-size:.85rem; background:var(--surface); color:var(--muted); }
+    .tab.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+
+    /* Timeline */
+    .timeline { position:relative; padding-left:2rem; }
+    .timeline::before { content:''; position:absolute; left:.6rem; top:0; bottom:0; width:2px; background:var(--border); }
+    .activity-item { position:relative; margin-bottom:1.25rem; padding:.85rem 1rem; background:var(--surface); border:1px solid var(--border); border-radius:.75rem; }
+    .activity-item::before { content:''; position:absolute; left:-1.6rem; top:1rem; width:10px; height:10px; border-radius:50%; background:var(--blue); border:2px solid var(--bg); }
+    .activity-item.USER_REGISTERED::before { background:var(--green); }
+    .activity-item.USER_LOGIN::before      { background:var(--blue); }
+    .activity-item.TASK_CREATED::before    { background:var(--teal); }
+    .activity-item.TASK_STATUS_CHANGED::before { background:var(--yellow); }
+    .activity-item.TASK_DELETED::before    { background:var(--red); }
+
+    .activity-header { display:flex; align-items:center; gap:.6rem; margin-bottom:.35rem; }
+    .event-badge { font-size:.7rem; font-weight:700; padding:.15rem .5rem; border-radius:.3rem; white-space:nowrap; }
+    .badge-REGISTERED { background:rgba(34,197,94,.15);  color:#4ade80; }
+    .badge-LOGIN      { background:rgba(59,130,246,.15); color:#93c5fd; }
+    .badge-CREATED    { background:rgba(20,184,166,.15); color:#5eead4; }
+    .badge-STATUS     { background:rgba(245,158,11,.15); color:#fbbf24; }
+    .badge-DELETED    { background:rgba(239,68,68,.15);  color:#f87171; }
+    .activity-user { font-size:.78rem; color:var(--muted); }
+    .activity-summary { font-size:.88rem; color:var(--text); }
+    .activity-time { font-size:.75rem; color:var(--muted); font-family:'Courier New',monospace; margin-top:.3rem; }
+    .meta-tag { font-size:.72rem; color:var(--muted); background:rgba(255,255,255,.05); padding:.1rem .45rem; border-radius:.3rem; display:inline-block; margin-top:.3rem; }
+
+    .empty { text-align:center; padding:3rem; color:var(--muted); }
+
+    /* Login overlay */
+    #login-overlay { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:100; }
+    .login-box { background:var(--surface); border:1px solid var(--border); border-radius:1rem; padding:2rem; width:340px; }
+    .login-box h2 { margin-bottom:1.25rem; font-size:1.1rem; }
+    .form-group { margin-bottom:1rem; }
+    .form-group label { display:block; font-size:.82rem; color:var(--muted); margin-bottom:.35rem; }
+    .form-group input { width:100%; background:#0f172a; border:1px solid var(--border); color:var(--text); padding:.6rem .75rem; border-radius:.5rem; font-size:.9rem; outline:none; }
+  </style>
+</head>
+<body>
+<script src="config.js"></script>
+
+<!-- Login overlay -->
+<div id="login-overlay">
+  <div class="login-box">
+    <h2>📅 Activity Timeline</h2>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem">กรุณา login เพื่อดู activities ของคุณ</p>
+    <div class="form-group">
+      <label>Email</label>
+      <input id="l-email" type="email" placeholder="email@example.com">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input id="l-pass" type="password" placeholder="password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="doLogin()">เข้าสู่ระบบ</button>
+    <p id="l-err" style="color:var(--red);font-size:.82rem;margin-top:.5rem"></p>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="header">
+  <h1>📅 Activity Timeline</h1>
+  <div style="display:flex;gap:1rem;align-items:center">
+    <span id="logged-as" style="font-size:.82rem;color:var(--muted)"></span>
+    <a href="index.html" style="color:var(--blue);font-size:.85rem;text-decoration:none">← Task Board</a>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">ทั้งหมด</div>
+      <div class="stat-value" id="stat-total">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label" style="color:var(--green)">Registered</div>
+      <div class="stat-value" style="color:var(--green)" id="stat-reg">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label" style="color:var(--blue)">Logins</div>
+      <div class="stat-value" style="color:var(--blue)" id="stat-login">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label" style="color:var(--teal)">Tasks Created</div>
+      <div class="stat-value" style="color:var(--teal)" id="stat-tasks">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label" style="color:var(--yellow)">Status Changes</div>
+      <div class="stat-value" style="color:var(--yellow)" id="stat-status">—</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" id="tab-mine" onclick="switchTab('mine')">🙋 กิจกรรมของฉัน</button>
+    <button class="tab" id="tab-all" onclick="switchTab('all')" style="display:none">👑 ทั้งระบบ (admin)</button>
+  </div>
+
+  <!-- Filter -->
+  <div class="filter-bar">
+    <select id="f-event">
+      <option value="">Event: ทั้งหมด</option>
+      <option value="USER_REGISTERED">USER_REGISTERED</option>
+      <option value="USER_LOGIN">USER_LOGIN</option>
+      <option value="TASK_CREATED">TASK_CREATED</option>
+      <option value="TASK_STATUS_CHANGED">TASK_STATUS_CHANGED</option>
+      <option value="TASK_DELETED">TASK_DELETED</option>
+    </select>
+    <button class="btn btn-primary" onclick="loadActivities()">🔄 โหลดใหม่</button>
+    <button class="btn btn-secondary" onclick="clearFilter()">✕ ล้าง</button>
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline" id="timeline">
+    <div class="empty">⏳ กำลังโหลด...</div>
+  </div>
+  <p id="last-refresh" style="font-size:.75rem;color:var(--muted);text-align:right;margin-top:.75rem"></p>
+</div>
+
+<script>
+const AUTH     = window.APP_CONFIG.AUTH_URL;
+const ACTIVITY = window.APP_CONFIG.ACTIVITY_URL;
+
+let token    = localStorage.getItem('jwt_token');
+let currUser = null;
+let currTab  = 'mine';
+
+const BADGE = {
+  USER_REGISTERED:    'REGISTERED',
+  USER_LOGIN:         'LOGIN',
+  TASK_CREATED:       'CREATED',
+  TASK_STATUS_CHANGED:'STATUS',
+  TASK_DELETED:       'DELETED'
+};
+const ICON = {
+  USER_REGISTERED:'🎉', USER_LOGIN:'🔑',
+  TASK_CREATED:'✅', TASK_STATUS_CHANGED:'🔄', TASK_DELETED:'🗑️'
+};
+
+function authHeaders() {
+  return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+}
+
+async function doLogin() {
+  const email    = document.getElementById('l-email').value.trim();
+  const password = document.getElementById('l-pass').value;
+  const res  = await fetch(`${AUTH}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    token = data.token;
+    localStorage.setItem('jwt_token', token);
+    currUser = data.user;
+    initPage();
+  } else {
+    document.getElementById('l-err').textContent = data.error || 'Login ล้มเหลว';
+  }
+}
+
+function initPage() {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('logged-as').textContent = `👤 ${currUser.username} (${currUser.role})`;
+  if (currUser.role === 'admin') {
+    document.getElementById('tab-all').style.display = 'inline-block';
+  }
+  loadActivities();
+}
+
+function switchTab(tab) {
+  currTab = tab;
+  document.getElementById('tab-mine').classList.toggle('active', tab === 'mine');
+  document.getElementById('tab-all').classList.toggle('active',  tab === 'all');
+  loadActivities();
+}
+
+async function loadActivities() {
+  const event_type = document.getElementById('f-event').value;
+  const params     = new URLSearchParams({ limit: 100 });
+  if (event_type) params.set('event_type', event_type);
+
+  const endpoint = currTab === 'all'
+    ? `${ACTIVITY}/api/activity/all?${params}`
+    : `${ACTIVITY}/api/activity/me?${params}`;
+
+  const res = await fetch(endpoint, { headers: authHeaders() });
+
+  if (res.status === 401) {
+    document.getElementById('login-overlay').style.display = 'flex';
+    return;
+  }
+  if (res.status === 403) {
+    document.getElementById('timeline').innerHTML =
+      '<div class="empty" style="color:#f87171">⛔ เฉพาะ admin เท่านั้น</div>';
+    return;
+  }
+  if (!res.ok) return;
+
+  const data = await res.json();
+  const acts = data.activities || [];
+
+  updateStats(acts);
+  renderTimeline(acts);
+
+  document.getElementById('last-refresh').textContent =
+    `อัปเดต: ${new Date().toLocaleTimeString('th-TH')} | ${acts.length}/${data.total} รายการ`;
+}
+
+function updateStats(acts) {
+  document.getElementById('stat-total').textContent  = acts.length;
+  document.getElementById('stat-reg').textContent    = acts.filter(a => a.event_type === 'USER_REGISTERED').length;
+  document.getElementById('stat-login').textContent  = acts.filter(a => a.event_type === 'USER_LOGIN').length;
+  document.getElementById('stat-tasks').textContent  = acts.filter(a => a.event_type === 'TASK_CREATED').length;
+  document.getElementById('stat-status').textContent = acts.filter(a => a.event_type === 'TASK_STATUS_CHANGED').length;
+}
+
+function renderTimeline(acts) {
+  const container = document.getElementById('timeline');
+  if (!acts.length) {
+    container.innerHTML = '<div class="empty">📭 ยังไม่มี activity</div>';
+    return;
+  }
+  container.innerHTML = acts.map(a => {
+    const badge   = BADGE[a.event_type] || 'LOGIN';
+    const icon    = ICON[a.event_type] || '•';
+    const time    = new Date(a.created_at).toLocaleString('th-TH', {
+      dateStyle: 'short', timeStyle: 'medium'
+    });
+    const metaStr = a.meta ? JSON.stringify(a.meta) : '';
+    return `
+      <div class="activity-item ${escHtml(a.event_type)}">
+        <div class="activity-header">
+          <span class="event-badge badge-${badge}">${icon} ${escHtml(a.event_type)}</span>
+          ${a.username ? `<span class="activity-user">👤 ${escHtml(a.username)}</span>` : ''}
+        </div>
+        <div class="activity-summary">${escHtml(a.summary || '—')}</div>
+        <div class="activity-time">🕐 ${escHtml(time)}</div>
+        ${metaStr ? `<span class="meta-tag">${escHtml(metaStr)}</span>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function clearFilter() {
+  document.getElementById('f-event').value = '';
+  loadActivities();
+}
+
+// Auto-login ถ้ามี token
+if (token) {
+  (async () => {
+    try {
+      const res  = await fetch(`${AUTH}/api/auth/verify`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.valid) { currUser = data.user; initPage(); }
+      else { localStorage.removeItem('jwt_token'); token = null; }
+    } catch {
+      localStorage.removeItem('jwt_token');
+      token = null;
+    }
+  })();
+}
+</script>
+</body>
+</html>
